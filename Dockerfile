@@ -1,5 +1,5 @@
 # Stage 1: Build stage
-FROM golang:1.25.0-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates
 
@@ -27,8 +27,7 @@ WORKDIR /app
 COPY --from=builder /app/api /app/api
 COPY --from=builder /app/seed /app/seed
 
-# Copy configurations & migrations
-COPY --from=builder /app/.env.example /app/.env
+# Copy migrations only (no .env — Render injects env vars directly)
 COPY --from=builder /app/migrations /app/migrations
 
 EXPOSE 8080

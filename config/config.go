@@ -62,6 +62,7 @@ type RedisConfig struct {
 	Password string `mapstructure:"REDIS_PASSWORD"`
 	DB       int    `mapstructure:"REDIS_DB"`
 	PoolSize int    `mapstructure:"REDIS_POOL_SIZE"`
+	TLS      bool   `mapstructure:"REDIS_TLS"`
 }
 
 func (r *RedisConfig) Addr() string {
@@ -94,6 +95,7 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetDefault("REDIS_PASSWORD", "")
 	viper.SetDefault("REDIS_DB", 0)
 	viper.SetDefault("REDIS_POOL_SIZE", 100)
+	viper.SetDefault("REDIS_TLS", false)
 	viper.SetDefault("JWT_SECRET", "supersecretjwtkeyforolympicsports")
 	viper.SetDefault("JWT_EXPIRATION", "24h")
 	viper.SetDefault("HMAC_SECRET", "supersecrethmacsigningkeyforqrcodes")

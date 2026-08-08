@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -12,12 +13,21 @@ import (
 
 // NewRedisClient initializes and returns a go-redis client.
 func NewRedisClient(ctx context.Context, cfg *config.RedisConfig) (*redis.Client, error) {
-	client := redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:     cfg.Addr(),
 		Password: cfg.Password,
 		DB:       cfg.DB,
 		PoolSize: cfg.PoolSize,
-	})
+	}
+
+	// Upstash and other managed Redis services require TLS
+	if cfg.TLS {
+		opts.TLSConfig = &tls.Config{
+			InsecureSkipVerify: false,
+		}
+	}
+
+	client := redis.NewClient(opts)
 
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
