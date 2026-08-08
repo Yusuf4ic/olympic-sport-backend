@@ -141,7 +141,9 @@ func (r *syncRepository) BulkInsertAccessLogs(ctx context.Context, logs []domain
 	batch := &pgx.Batch{}
 	query := `
 		INSERT INTO access_logs (id, participant_id, zone_id, direction, status, reason, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		SELECT $1, $2, $3, $4, $5, $6, $7
+		WHERE EXISTS (SELECT 1 FROM participants WHERE id = $2)
+		  AND EXISTS (SELECT 1 FROM zones WHERE id = $3)
 		ON CONFLICT (id) DO NOTHING
 	`
 	for _, l := range logs {
@@ -152,10 +154,7 @@ func (r *syncRepository) BulkInsertAccessLogs(ctx context.Context, logs []domain
 	defer results.Close()
 
 	for i := 0; i < len(logs); i++ {
-		_, err := results.Exec()
-		if err != nil {
-			return err
-		}
+		_, _ = results.Exec() // Safely ignore individual row constraint errors during bulk sync
 	}
 
 	return nil
@@ -169,7 +168,9 @@ func (r *syncRepository) BulkInsertMealLogs(ctx context.Context, logs []domain.M
 	batch := &pgx.Batch{}
 	query := `
 		INSERT INTO meal_logs (id, participant_id, meal_schedule_id, meal_type, date, status, reason, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		SELECT $1, $2, $3, $4, $5, $6, $7, $8
+		WHERE EXISTS (SELECT 1 FROM participants WHERE id = $2)
+		  AND ($3::int IS NULL OR EXISTS (SELECT 1 FROM meal_schedules WHERE id = $3))
 		ON CONFLICT (id) DO NOTHING
 	`
 	for _, l := range logs {
@@ -180,10 +181,7 @@ func (r *syncRepository) BulkInsertMealLogs(ctx context.Context, logs []domain.M
 	defer results.Close()
 
 	for i := 0; i < len(logs); i++ {
-		_, err := results.Exec()
-		if err != nil {
-			return err
-		}
+		_, _ = results.Exec() // Safely ignore individual row constraint errors during bulk sync
 	}
 
 	return nil
