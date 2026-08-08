@@ -1,0 +1,76 @@
+services:
+  - type: web
+    name: olympic-sport-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: SERVER_PORT
+        value: 8080
+      - key: SERVER_MODE
+        value: release
+      - key: SERVER_SHUTDOWN_TIMEOUT
+        value: 10s
+
+      # PostgreSQL — подключается к managed DB ниже
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: olympic-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: olympic-postgres
+          property: port
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: olympic-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: olympic-postgres
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: olympic-postgres
+          property: database
+      - key: POSTGRES_SSLMODE
+        value: require
+      - key: POSTGRES_MAX_CONNS
+        value: 10
+      - key: POSTGRES_MIN_CONNS
+        value: 2
+      - key: POSTGRES_MAX_CONN_IDLE_TIME
+        value: 15m
+      - key: POSTGRES_MAX_CONN_LIFETIME
+        value: 1h
+
+      # Redis — внешний (Render не даёт Redis на free, используем Upstash)
+      - key: REDIS_HOST
+        sync: false   # вставишь вручную из Upstash
+      - key: REDIS_PORT
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_DB
+        value: 0
+      - key: REDIS_POOL_SIZE
+        value: 10
+
+      # Секреты — вставляешь вручную в Render Dashboard
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: 24h
+      - key: HMAC_SECRET
+        sync: false
+
+databases:
+  - name: olympic-postgres
+    plan: free
+    databaseName: olympic_sport_db
+    user: postgres
